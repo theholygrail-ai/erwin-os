@@ -21,8 +21,7 @@
     "infra:setup": "bash infra/aws/setup.sh"
   },
   "dependencies": {
-    "dotenv": "^16.4.0",
-    "serverless-http": "^3.2.0"
+    "dotenv": "^16.4.0"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
