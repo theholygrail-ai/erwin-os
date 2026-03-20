@@ -1,19 +1,21 @@
 const { Router } = require('express');
-const { ClickUpConnector } = require('@erwin-os/connectors/clickup');
-const { GmailConnector } = require('@erwin-os/connectors/gmail');
-const { GoogleDriveConnector } = require('@erwin-os/connectors/google-drive');
-const { classifyEvent } = require('@erwin-os/classifier');
 const { dynamoClient, sqsClient } = require('@erwin-os/shared/aws-clients');
 const { config } = require('@erwin-os/shared/config');
 const { logger } = require('@erwin-os/shared/logger');
 const { createJob, JOB_STATUSES, PRIORITIES } = require('@erwin-os/schemas');
 const { v4: uuidv4 } = require('uuid');
 
+let _ClickUpConnector, _GmailConnector, _GoogleDriveConnector, _classifyEvent;
+function getClickUp() { if (!_ClickUpConnector) _ClickUpConnector = require('@erwin-os/connectors/clickup').ClickUpConnector; return _ClickUpConnector; }
+function getGmail() { if (!_GmailConnector) _GmailConnector = require('@erwin-os/connectors/gmail').GmailConnector; return _GmailConnector; }
+function getDrive() { if (!_GoogleDriveConnector) _GoogleDriveConnector = require('@erwin-os/connectors/google-drive').GoogleDriveConnector; return _GoogleDriveConnector; }
+function getClassifier() { if (!_classifyEvent) _classifyEvent = require('@erwin-os/classifier').classifyEvent; return _classifyEvent; }
+
 const router = Router();
 
 router.post('/clickup', async (req, res) => {
   try {
-    const connector = new ClickUpConnector(null);
+    const connector = new (getClickUp())(null);
     const signature = req.headers['x-signature'];
 
     if (signature && !connector.verifyWebhookSignature(req.body.toString(), signature)) {
@@ -36,7 +38,7 @@ router.post('/gmail-pubsub', async (req, res) => {
     const pubsubMessage = req.body?.message;
     if (!pubsubMessage) return res.status(400).json({ error: 'No Pub/Sub message' });
 
-    const connector = new GmailConnector();
+    const connector = new (getGmail())();
     const events = await connector.processNotification(pubsubMessage);
 
     for (const event of events) {
@@ -59,7 +61,7 @@ router.post('/google-drive', async (req, res) => {
       return res.status(200).json({ sync: true });
     }
 
-    const connector = new GoogleDriveConnector();
+    const connector = new (getDrive())();
     const { events } = await connector.processChanges();
 
     for (const event of events) {
@@ -74,7 +76,7 @@ router.post('/google-drive', async (req, res) => {
 });
 
 async function processNormalizedEvent(event, app) {
-  const classification = classifyEvent(event);
+  const classification = getClassifier()(event);
 
   logger.info('webhooks', 'Event classified', {
     source: event.source_system,

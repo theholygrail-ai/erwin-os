@@ -1,11 +1,13 @@
 const { Router } = require('express');
-const { ClickUpConnector } = require('@erwin-os/connectors/clickup');
-const { SlackConnector } = require('@erwin-os/connectors/slack');
-const { GmailConnector } = require('@erwin-os/connectors/gmail');
-const { GoogleDriveConnector } = require('@erwin-os/connectors/google-drive');
 const { dynamoClient } = require('@erwin-os/shared/aws-clients');
 const { config } = require('@erwin-os/shared/config');
 const { logger } = require('@erwin-os/shared/logger');
+
+let _ClickUp, _Slack, _Gmail, _Drive;
+function getClickUp() { if (!_ClickUp) _ClickUp = require('@erwin-os/connectors/clickup').ClickUpConnector; return _ClickUp; }
+function getSlack() { if (!_Slack) _Slack = require('@erwin-os/connectors/slack').SlackConnector; return _Slack; }
+function getGmail() { if (!_Gmail) _Gmail = require('@erwin-os/connectors/gmail').GmailConnector; return _Gmail; }
+function getDrive() { if (!_Drive) _Drive = require('@erwin-os/connectors/google-drive').GoogleDriveConnector; return _Drive; }
 
 const router = Router();
 
@@ -15,7 +17,7 @@ router.get('/status', async (req, res) => {
     const statusChecks = [];
 
     if (config.slack.botToken) {
-      const slack = new SlackConnector();
+      const slack = new (getSlack())();
       statusChecks.push(slack.healthCheck());
     }
 
@@ -43,10 +45,10 @@ router.post('/:name/oauth', async (req, res) => {
 
     switch (name) {
       case 'clickup':
-        authUrl = ClickUpConnector.getOAuthUrl();
+        authUrl = getClickUp().getOAuthUrl();
         break;
       case 'google':
-        authUrl = GmailConnector.getAuthUrl();
+        authUrl = getGmail().getAuthUrl();
         break;
       default:
         return res.status(400).json({ error: `Unknown connector: ${name}` });
@@ -64,7 +66,7 @@ router.get('/clickup/oauth/callback', async (req, res) => {
     const { code } = req.query;
     if (!code) return res.status(400).json({ error: 'Missing authorization code' });
 
-    const tokens = await ClickUpConnector.exchangeCode(code);
+    const tokens = await getClickUp().exchangeCode(code);
 
     await dynamoClient.put(config.aws.tables.connectors, {
       connector_name: 'clickup',
@@ -85,7 +87,7 @@ router.get('/google/oauth/callback', async (req, res) => {
     const { code } = req.query;
     if (!code) return res.status(400).json({ error: 'Missing authorization code' });
 
-    const tokens = await GmailConnector.exchangeCode(code);
+    const tokens = await getGmail().exchangeCode(code);
 
     await dynamoClient.put(config.aws.tables.connectors, {
       connector_name: 'google',
@@ -108,7 +110,7 @@ router.post('/:name/test', async (req, res) => {
 
     switch (name) {
       case 'slack':
-        result = await new SlackConnector().healthCheck();
+        result = await new (getSlack())().healthCheck();
         break;
       default:
         return res.json({ status: 'unknown', message: `Test not implemented for ${name}` });
