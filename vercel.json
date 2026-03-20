@@ -1,7 +1,14 @@
 {
+  "version": 2,
+  "installCommand": "npm install",
   "buildCommand": "npm run build",
   "outputDirectory": "apps/web/dist",
-  "installCommand": "npm install",
+  "framework": null,
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "services/**,packages/**,.env"
+    }
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/(.*)", "destination": "/index.html" }
