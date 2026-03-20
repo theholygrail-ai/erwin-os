@@ -1,6 +1,7 @@
 const { config } = require('./config');
 
-const isLocalDev = config.server.nodeEnv === 'development' && !process.env.AWS_ACCESS_KEY_ID && !config.aws.accountId;
+const hasAwsCreds = !!(process.env.AWS_ACCESS_KEY_ID || config.aws.accountId);
+const isLocalDev = !hasAwsCreds;
 
 let dynamoClient, s3Client, sqsClient;
 
