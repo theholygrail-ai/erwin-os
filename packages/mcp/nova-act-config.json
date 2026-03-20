@@ -1,0 +1,50 @@
+{
+  "mcpServers": {
+    "nova_act_browser": {
+      "command": "uvx",
+      "args": ["nova-act-mcp-server"],
+      "env": {
+        "NOVA_ACT_API_KEY": "${ssm:/erwin-os/nova-act-api-key}"
+      },
+      "description": "AWS Nova Act browser automation MCP server (primary)",
+      "tools": [
+        "start_session",
+        "execute_instruction",
+        "inspect_browser",
+        "end_session",
+        "list_browser_sessions",
+        "fetch_file",
+        "view_html_log",
+        "compress_logs"
+      ]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {},
+      "description": "MCP Filesystem server for local file operations",
+      "tools": [
+        "read_file",
+        "write_file",
+        "create_directory",
+        "list_directory",
+        "move_file",
+        "search_files",
+        "get_file_info"
+      ]
+    }
+  },
+  "fallback": {
+    "browser": {
+      "engine": "playwright",
+      "package": "playwright",
+      "description": "Playwright headless Chromium for deterministic browser automation (fallback)",
+      "triggerConditions": [
+        "nova_act_unhealthy",
+        "nova_act_over_budget",
+        "deterministic_task",
+        "nova_act_api_key_missing"
+      ]
+    }
+  }
+}

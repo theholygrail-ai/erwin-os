@@ -1,0 +1,336 @@
+{
+  "schema_version": "1.0",
+  "description": "Output format specifications for each document type supported by the Builder agent. Defines structure, front matter, required/optional sections, and available export formats.",
+  "doc_types": [
+    {
+      "type": "technical_spec",
+      "display_name": "Technical Specification",
+      "markdown_structure": {
+        "heading_level_start": 2,
+        "include_toc": true,
+        "toc_depth": 3,
+        "code_block_style": "fenced",
+        "table_style": "pipe"
+      },
+      "front_matter_fields": [
+        { "field": "title", "required": true, "type": "string" },
+        { "field": "doc_type", "required": true, "type": "string", "value": "technical_spec" },
+        { "field": "version", "required": true, "type": "string" },
+        { "field": "status", "required": true, "type": "string", "default": "draft" },
+        { "field": "author", "required": true, "type": "string" },
+        { "field": "created", "required": true, "type": "date" },
+        { "field": "last_modified", "required": true, "type": "date" },
+        { "field": "job_id", "required": true, "type": "string" },
+        { "field": "run_id", "required": true, "type": "string" },
+        { "field": "audience", "required": true, "type": "string" },
+        { "field": "tags", "required": false, "type": "array" },
+        { "field": "reviewers", "required": false, "type": "array" },
+        { "field": "related_specs", "required": false, "type": "array" },
+        { "field": "jira_ticket", "required": false, "type": "string" }
+      ],
+      "required_sections": ["Overview", "Background & Context", "Requirements", "System Design", "Security Considerations", "Testing Strategy", "References"],
+      "optional_sections": ["API / Interface Contracts", "Data Model", "Rollout Plan", "Open Questions"],
+      "export_formats": ["markdown", "pdf", "docx"]
+    },
+    {
+      "type": "sop",
+      "display_name": "Standard Operating Procedure",
+      "markdown_structure": {
+        "heading_level_start": 2,
+        "include_toc": true,
+        "toc_depth": 2,
+        "code_block_style": "fenced",
+        "table_style": "pipe",
+        "numbered_steps": true
+      },
+      "front_matter_fields": [
+        { "field": "title", "required": true, "type": "string" },
+        { "field": "doc_type", "required": true, "type": "string", "value": "sop" },
+        { "field": "version", "required": true, "type": "string" },
+        { "field": "status", "required": true, "type": "string", "default": "draft" },
+        { "field": "author", "required": true, "type": "string" },
+        { "field": "created", "required": true, "type": "date" },
+        { "field": "last_modified", "required": true, "type": "date" },
+        { "field": "job_id", "required": true, "type": "string" },
+        { "field": "run_id", "required": true, "type": "string" },
+        { "field": "audience", "required": true, "type": "string" },
+        { "field": "tags", "required": false, "type": "array" },
+        { "field": "process_owner", "required": true, "type": "string" },
+        { "field": "review_frequency", "required": false, "type": "string" },
+        { "field": "effective_date", "required": false, "type": "date" },
+        { "field": "supersedes", "required": false, "type": "string" }
+      ],
+      "required_sections": ["Purpose", "Scope", "Prerequisites", "Procedure Steps", "Verification", "Troubleshooting", "Revision History"],
+      "optional_sections": ["Rollback / Recovery"],
+      "export_formats": ["markdown", "pdf", "docx"]
+    },
+    {
+      "type": "architecture_note",
+      "display_name": "Architecture Decision Note",
+      "markdown_structure": {
+        "heading_level_start": 2,
+        "include_toc": false,
+        "code_block_style": "fenced",
+        "table_style": "pipe"
+      },
+      "front_matter_fields": [
+        { "field": "title", "required": true, "type": "string" },
+        { "field": "doc_type", "required": true, "type": "string", "value": "architecture_note" },
+        { "field": "version", "required": true, "type": "string" },
+        { "field": "status", "required": true, "type": "string", "enum": ["proposed", "accepted", "deprecated", "superseded"], "default": "proposed" },
+        { "field": "author", "required": true, "type": "string" },
+        { "field": "created", "required": true, "type": "date" },
+        { "field": "last_modified", "required": true, "type": "date" },
+        { "field": "job_id", "required": true, "type": "string" },
+        { "field": "run_id", "required": true, "type": "string" },
+        { "field": "audience", "required": true, "type": "string" },
+        { "field": "decision_date", "required": true, "type": "date" },
+        { "field": "decision_makers", "required": false, "type": "array" },
+        { "field": "superseded_by", "required": false, "type": "string" }
+      ],
+      "required_sections": ["Title & Status", "Context", "Decision", "Options Considered", "Consequences"],
+      "optional_sections": ["Related Decisions"],
+      "export_formats": ["markdown", "pdf"]
+    },
+    {
+      "type": "workflow",
+      "display_name": "Workflow Documentation",
+      "markdown_structure": {
+        "heading_level_start": 2,
+        "include_toc": true,
+        "toc_depth": 2,
+        "code_block_style": "fenced",
+        "table_style": "pipe",
+        "diagram_support": true
+      },
+      "front_matter_fields": [
+        { "field": "title", "required": true, "type": "string" },
+        { "field": "doc_type", "required": true, "type": "string", "value": "workflow" },
+        { "field": "version", "required": true, "type": "string" },
+        { "field": "status", "required": true, "type": "string", "default": "draft" },
+        { "field": "author", "required": true, "type": "string" },
+        { "field": "created", "required": true, "type": "date" },
+        { "field": "last_modified", "required": true, "type": "date" },
+        { "field": "job_id", "required": true, "type": "string" },
+        { "field": "run_id", "required": true, "type": "string" },
+        { "field": "audience", "required": true, "type": "string" },
+        { "field": "tags", "required": false, "type": "array" },
+        { "field": "workflow_owner", "required": false, "type": "string" },
+        { "field": "trigger_type", "required": false, "type": "string" }
+      ],
+      "required_sections": ["Workflow Overview", "Actors & Roles", "Trigger Conditions", "Process Steps", "Exceptions & Edge Cases"],
+      "optional_sections": ["Tools & Systems", "Metrics & SLAs"],
+      "export_formats": ["markdown", "pdf"]
+    },
+    {
+      "type": "release_note",
+      "display_name": "Release Note",
+      "markdown_structure": {
+        "heading_level_start": 2,
+        "include_toc": false,
+        "code_block_style": "fenced",
+        "table_style": "pipe"
+      },
+      "front_matter_fields": [
+        { "field": "title", "required": true, "type": "string" },
+        { "field": "doc_type", "required": true, "type": "string", "value": "release_note" },
+        { "field": "version", "required": true, "type": "string" },
+        { "field": "status", "required": true, "type": "string", "default": "draft" },
+        { "field": "author", "required": true, "type": "string" },
+        { "field": "created", "required": true, "type": "date" },
+        { "field": "last_modified", "required": true, "type": "date" },
+        { "field": "job_id", "required": true, "type": "string" },
+        { "field": "run_id", "required": true, "type": "string" },
+        { "field": "audience", "required": true, "type": "string" },
+        { "field": "release_version", "required": true, "type": "string" },
+        { "field": "release_date", "required": true, "type": "date" },
+        { "field": "product", "required": true, "type": "string" }
+      ],
+      "required_sections": ["Release Summary", "New Features", "Bug Fixes"],
+      "optional_sections": ["Improvements", "Breaking Changes", "Known Issues", "Upgrade Instructions"],
+      "export_formats": ["markdown", "pdf"]
+    },
+    {
+      "type": "user_guide",
+      "display_name": "User Guide",
+      "markdown_structure": {
+        "heading_level_start": 2,
+        "include_toc": true,
+        "toc_depth": 3,
+        "code_block_style": "fenced",
+        "table_style": "pipe",
+        "screenshot_support": true,
+        "callout_support": true
+      },
+      "front_matter_fields": [
+        { "field": "title", "required": true, "type": "string" },
+        { "field": "doc_type", "required": true, "type": "string", "value": "user_guide" },
+        { "field": "version", "required": true, "type": "string" },
+        { "field": "status", "required": true, "type": "string", "default": "draft" },
+        { "field": "author", "required": true, "type": "string" },
+        { "field": "created", "required": true, "type": "date" },
+        { "field": "last_modified", "required": true, "type": "date" },
+        { "field": "job_id", "required": true, "type": "string" },
+        { "field": "run_id", "required": true, "type": "string" },
+        { "field": "audience", "required": true, "type": "string" },
+        { "field": "tags", "required": false, "type": "array" },
+        { "field": "product_version", "required": false, "type": "string" },
+        { "field": "platform", "required": false, "type": "string" }
+      ],
+      "required_sections": ["Introduction", "Getting Started", "Core Features", "Troubleshooting"],
+      "optional_sections": ["Advanced Usage", "FAQ", "Glossary"],
+      "export_formats": ["markdown", "pdf", "docx"]
+    },
+    {
+      "type": "api_doc",
+      "display_name": "API Documentation",
+      "markdown_structure": {
+        "heading_level_start": 2,
+        "include_toc": true,
+        "toc_depth": 3,
+        "code_block_style": "fenced",
+        "table_style": "pipe",
+        "code_examples_required": true
+      },
+      "front_matter_fields": [
+        { "field": "title", "required": true, "type": "string" },
+        { "field": "doc_type", "required": true, "type": "string", "value": "api_doc" },
+        { "field": "version", "required": true, "type": "string" },
+        { "field": "status", "required": true, "type": "string", "default": "draft" },
+        { "field": "author", "required": true, "type": "string" },
+        { "field": "created", "required": true, "type": "date" },
+        { "field": "last_modified", "required": true, "type": "date" },
+        { "field": "job_id", "required": true, "type": "string" },
+        { "field": "run_id", "required": true, "type": "string" },
+        { "field": "audience", "required": true, "type": "string" },
+        { "field": "api_version", "required": true, "type": "string" },
+        { "field": "base_url", "required": true, "type": "string" },
+        { "field": "auth_method", "required": false, "type": "string" }
+      ],
+      "required_sections": ["Overview", "Authentication", "Endpoints", "Error Handling", "Code Examples"],
+      "optional_sections": ["Rate Limits", "Webhooks", "Changelog"],
+      "export_formats": ["markdown", "pdf"]
+    },
+    {
+      "type": "meeting_summary",
+      "display_name": "Meeting Summary",
+      "markdown_structure": {
+        "heading_level_start": 2,
+        "include_toc": false,
+        "code_block_style": "fenced",
+        "table_style": "pipe"
+      },
+      "front_matter_fields": [
+        { "field": "title", "required": true, "type": "string" },
+        { "field": "doc_type", "required": true, "type": "string", "value": "meeting_summary" },
+        { "field": "version", "required": true, "type": "string" },
+        { "field": "status", "required": true, "type": "string", "default": "draft" },
+        { "field": "author", "required": true, "type": "string" },
+        { "field": "created", "required": true, "type": "date" },
+        { "field": "last_modified", "required": true, "type": "date" },
+        { "field": "job_id", "required": true, "type": "string" },
+        { "field": "run_id", "required": true, "type": "string" },
+        { "field": "audience", "required": true, "type": "string" },
+        { "field": "meeting_date", "required": true, "type": "date" },
+        { "field": "attendees", "required": true, "type": "array" },
+        { "field": "facilitator", "required": false, "type": "string" },
+        { "field": "meeting_type", "required": false, "type": "string" }
+      ],
+      "required_sections": ["Meeting Details", "Agenda", "Key Discussion Points", "Decisions Made", "Action Items"],
+      "optional_sections": ["Open Items"],
+      "export_formats": ["markdown", "pdf"]
+    },
+    {
+      "type": "qa_uat_summary",
+      "display_name": "QA / UAT Summary",
+      "markdown_structure": {
+        "heading_level_start": 2,
+        "include_toc": true,
+        "toc_depth": 2,
+        "code_block_style": "fenced",
+        "table_style": "pipe",
+        "metrics_tables": true
+      },
+      "front_matter_fields": [
+        { "field": "title", "required": true, "type": "string" },
+        { "field": "doc_type", "required": true, "type": "string", "value": "qa_uat_summary" },
+        { "field": "version", "required": true, "type": "string" },
+        { "field": "status", "required": true, "type": "string", "default": "draft" },
+        { "field": "author", "required": true, "type": "string" },
+        { "field": "created", "required": true, "type": "date" },
+        { "field": "last_modified", "required": true, "type": "date" },
+        { "field": "job_id", "required": true, "type": "string" },
+        { "field": "run_id", "required": true, "type": "string" },
+        { "field": "audience", "required": true, "type": "string" },
+        { "field": "test_cycle", "required": true, "type": "string" },
+        { "field": "environment", "required": true, "type": "string" },
+        { "field": "test_period_start", "required": true, "type": "date" },
+        { "field": "test_period_end", "required": true, "type": "date" },
+        { "field": "release_candidate", "required": false, "type": "string" }
+      ],
+      "required_sections": ["Test Summary", "Scope & Coverage", "Results Breakdown", "Defects Found", "Risk Assessment", "Release Recommendation"],
+      "optional_sections": ["Appendix: Test Cases"],
+      "export_formats": ["markdown", "pdf", "docx"]
+    },
+    {
+      "type": "implementation_note",
+      "display_name": "Implementation Note",
+      "markdown_structure": {
+        "heading_level_start": 2,
+        "include_toc": false,
+        "code_block_style": "fenced",
+        "table_style": "pipe"
+      },
+      "front_matter_fields": [
+        { "field": "title", "required": true, "type": "string" },
+        { "field": "doc_type", "required": true, "type": "string", "value": "implementation_note" },
+        { "field": "version", "required": true, "type": "string" },
+        { "field": "status", "required": true, "type": "string", "default": "draft" },
+        { "field": "author", "required": true, "type": "string" },
+        { "field": "created", "required": true, "type": "date" },
+        { "field": "last_modified", "required": true, "type": "date" },
+        { "field": "job_id", "required": true, "type": "string" },
+        { "field": "run_id", "required": true, "type": "string" },
+        { "field": "audience", "required": true, "type": "string" },
+        { "field": "tags", "required": false, "type": "array" },
+        { "field": "related_ticket", "required": false, "type": "string" },
+        { "field": "related_spec", "required": false, "type": "string" },
+        { "field": "implemented_by", "required": false, "type": "string" },
+        { "field": "implementation_date", "required": false, "type": "date" }
+      ],
+      "required_sections": ["Summary", "Approach", "Configuration & Setup", "Caveats & Gotchas"],
+      "optional_sections": ["Monitoring & Observability", "Rollback Procedure", "Follow-Up Items"],
+      "export_formats": ["markdown", "pdf"]
+    },
+    {
+      "type": "support_handover",
+      "display_name": "Support Handover",
+      "markdown_structure": {
+        "heading_level_start": 2,
+        "include_toc": true,
+        "toc_depth": 2,
+        "code_block_style": "fenced",
+        "table_style": "pipe"
+      },
+      "front_matter_fields": [
+        { "field": "title", "required": true, "type": "string" },
+        { "field": "doc_type", "required": true, "type": "string", "value": "support_handover" },
+        { "field": "version", "required": true, "type": "string" },
+        { "field": "status", "required": true, "type": "string", "default": "draft" },
+        { "field": "author", "required": true, "type": "string" },
+        { "field": "created", "required": true, "type": "date" },
+        { "field": "last_modified", "required": true, "type": "date" },
+        { "field": "job_id", "required": true, "type": "string" },
+        { "field": "run_id", "required": true, "type": "string" },
+        { "field": "audience", "required": true, "type": "string" },
+        { "field": "handover_from", "required": true, "type": "string" },
+        { "field": "handover_to", "required": true, "type": "string" },
+        { "field": "effective_date", "required": true, "type": "date" },
+        { "field": "client_or_system", "required": true, "type": "string" }
+      ],
+      "required_sections": ["Handover Summary", "System / Client Overview", "Current State", "Access & Credentials", "Common Issues & Runbooks", "Escalation Paths", "Key Documentation"],
+      "optional_sections": ["Transition Timeline"],
+      "export_formats": ["markdown", "pdf", "docx"]
+    }
+  ]
+}

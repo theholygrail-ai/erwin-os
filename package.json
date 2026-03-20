@@ -1,0 +1,33 @@
+{
+  "name": "erwin-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Erwin OS - The eComplete AI Technical Writer",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=services/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
+    "dev:orchestrator": "npm run dev --workspace=services/orchestrator",
+    "dev:workers": "npm run dev --workspace=services/workers",
+    "dev:scheduler": "npm run dev --workspace=services/scheduler",
+    "dev": "concurrently \"npm:dev:api\" \"npm:dev:web\"",
+    "build": "npm run build --workspace=apps/web",
+    "build:web": "npm run build --workspace=apps/web",
+    "infra:setup": "bash infra/aws/setup.sh"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0",
+    "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

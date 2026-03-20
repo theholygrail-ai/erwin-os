@@ -1,0 +1,123 @@
+{
+  "agent": "planner",
+  "tool_groups": {
+    "mcp_tools": [
+      {
+        "name": "memory_mcp",
+        "description": "Persistent knowledge graph for retrieving organizational context, past documentation patterns, audience profiles, and terminology preferences. Used to inform plan design with institutional knowledge.",
+        "access_level": "read_write",
+        "operations": [
+          "search_nodes",
+          "read_graph",
+          "create_entities",
+          "add_observations",
+          "create_relations"
+        ]
+      },
+      {
+        "name": "filesystem_mcp",
+        "description": "Local filesystem access for reading evidence packs, handoff payloads, and writing documentation plans.",
+        "access_level": "read_write",
+        "root_paths": [
+          "workspace/artifacts/",
+          "workspace/templates/",
+          "workspace/jobs/"
+        ],
+        "operations": [
+          "read_file",
+          "write_file",
+          "list_directory"
+        ]
+      },
+      {
+        "name": "template_library",
+        "description": "Access to the organizational documentation template library. Provides template definitions with section structures, audience defaults, and formatting guidelines for each document type.",
+        "access_level": "read_only",
+        "operations": [
+          "list_templates",
+          "get_template",
+          "search_templates",
+          "get_template_metadata"
+        ]
+      }
+    ],
+    "internal_tools": [
+      {
+        "name": "get_templates",
+        "description": "Retrieve one or more documentation templates from the template library. Returns the full template definition including sections, audience defaults, and formatting rules.",
+        "parameters": {
+          "doc_type": { "type": "string", "required": false, "description": "Specific doc type to retrieve. If omitted, returns all templates." },
+          "search_query": { "type": "string", "required": false, "description": "Fuzzy search across template names and descriptions." },
+          "include_examples": { "type": "boolean", "default": false, "description": "Whether to include example plans based on each template." }
+        },
+        "returns": {
+          "templates": [
+            {
+              "name": "string",
+              "doc_type": "string",
+              "sections": ["object"],
+              "audience_defaults": "object",
+              "formatting_rules": "object"
+            }
+          ],
+          "total_count": "integer"
+        }
+      },
+      {
+        "name": "infer_doc_type",
+        "description": "Analyze job context and evidence pack to determine the most appropriate document type. Uses heuristics based on task keywords, evidence patterns, and requester context.",
+        "parameters": {
+          "job_context": { "type": "object", "required": true, "description": "The job context from the handoff payload." },
+          "evidence_summary": { "type": "string", "required": true, "description": "The summary field from the evidence pack." },
+          "doc_type_hint": { "type": "string", "required": false, "description": "Optional hint from the job context." }
+        },
+        "returns": {
+          "inferred_type": "string",
+          "confidence": "float",
+          "reasoning": "string",
+          "alternative_types": [
+            {
+              "type": "string",
+              "confidence": "float",
+              "reasoning": "string"
+            }
+          ]
+        }
+      },
+      {
+        "name": "create_plan",
+        "description": "Assemble the final documentation plan from all components: doc type, audience analysis, section outline, missing inputs, and acceptance checklist. Validates the plan structure and writes to disk.",
+        "parameters": {
+          "run_id": { "type": "string", "required": true },
+          "doc_type": { "type": "string", "required": true },
+          "title": { "type": "string", "required": true },
+          "audience": { "type": "object", "required": true },
+          "scope": { "type": "object", "required": true },
+          "sections": { "type": "array", "required": true },
+          "front_matter": { "type": "object", "required": true },
+          "missing_inputs": { "type": "array", "required": false, "default": [] },
+          "acceptance_checklist": { "type": "array", "required": true },
+          "estimated_total_words": { "type": "integer", "required": true },
+          "export_formats": { "type": "array", "items": { "type": "string" }, "default": ["markdown"] },
+          "plan_version": { "type": "integer", "default": 1 },
+          "changes_from_previous": { "type": "array", "required": false }
+        },
+        "returns": {
+          "plan_path": "string",
+          "validation_result": {
+            "valid": "boolean",
+            "errors": ["string"],
+            "warnings": ["string"]
+          },
+          "plan_summary": {
+            "doc_type": "string",
+            "section_count": "integer",
+            "checklist_item_count": "integer",
+            "missing_input_count": "integer",
+            "status": "string"
+          }
+        }
+      }
+    ]
+  }
+}

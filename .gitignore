@@ -1,0 +1,15 @@
+node_modules/
+.env
+.env.local
+dist/
+build/
+.expo/
+*.log
+.DS_Store
+Thumbs.db
+coverage/
+.turbo/
+*.tgz
+.cache/
+.vite/
+.vercel/

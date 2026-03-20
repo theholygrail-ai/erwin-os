@@ -1,0 +1,225 @@
+{
+  "agent": "verifier",
+  "tool_groups": {
+    "mcp_tools": [
+      {
+        "name": "filesystem_mcp",
+        "description": "Local filesystem access for reading documents, evidence packs, documentation plans, acceptance checklists, and writing verification verdicts.",
+        "access_level": "read_write",
+        "root_paths": [
+          "workspace/artifacts/",
+          "workspace/output/"
+        ],
+        "operations": [
+          "read_file",
+          "write_file",
+          "list_directory"
+        ]
+      },
+      {
+        "name": "nova_act_browser",
+        "description": "Primary tool for link validation. Navigates to URLs referenced in the document and checks HTTP response status, page load success, and content availability.",
+        "access_level": "read_only",
+        "role": "primary",
+        "operations": [
+          "navigate",
+          "get_page_status",
+          "get_page_text",
+          "screenshot"
+        ],
+        "constraints": {
+          "purpose": "link_validation_only",
+          "max_checks_per_run": 30,
+          "timeout_per_url_ms": 15000,
+          "respect_robots_txt": true
+        }
+      },
+      {
+        "name": "playwright_browser",
+        "description": "Fallback link validation tool. Used when Nova Act is unavailable. Provides programmatic URL checking with status code retrieval.",
+        "access_level": "read_only",
+        "role": "fallback",
+        "operations": [
+          "goto",
+          "get_content",
+          "evaluate",
+          "wait_for_selector"
+        ],
+        "constraints": {
+          "use_only_when": "nova_act_browser is unavailable or errors",
+          "max_checks_per_run": 30,
+          "timeout_per_url_ms": 15000
+        }
+      },
+      {
+        "name": "source_comparison",
+        "description": "Specialized tool for comparing document claims against evidence source content. Performs semantic comparison to detect misrepresentation, exaggeration, or contradiction between cited evidence and document text.",
+        "access_level": "read_only",
+        "operations": [
+          "compare_claim_to_source",
+          "batch_compare",
+          "detect_fabrication"
+        ],
+        "capabilities": {
+          "comparison_types": ["exact_match", "paraphrase_match", "semantic_similarity", "contradiction_detection"],
+          "confidence_output": true,
+          "explanation_output": true
+        }
+      },
+      {
+        "name": "citation_checker",
+        "description": "Extracts, parses, and validates citation references within a document. Maps citations to evidence pack source_ids and identifies orphaned or invalid references.",
+        "access_level": "read_only",
+        "operations": [
+          "extract_citations",
+          "validate_citation_ids",
+          "find_uncited_claims",
+          "generate_citation_report"
+        ],
+        "capabilities": {
+          "citation_format": "[Evidence: src-XXX]",
+          "heuristic_claim_detection": true,
+          "batch_processing": true
+        }
+      },
+      {
+        "name": "quality_rules",
+        "description": "Access to organizational quality standards, style guide rules, and formatting requirements. Used to validate document compliance against established standards.",
+        "access_level": "read_only",
+        "operations": [
+          "get_quality_rules",
+          "check_terminology",
+          "check_formatting",
+          "check_readability",
+          "get_audience_guidelines"
+        ],
+        "capabilities": {
+          "terminology_database": true,
+          "readability_scoring": true,
+          "formatting_validation": true,
+          "audience_level_detection": true
+        }
+      }
+    ],
+    "internal_tools": [
+      {
+        "name": "validate_structure",
+        "description": "Parse a Markdown document and validate its structure against the documentation plan. Checks front matter completeness, section presence, heading hierarchy, and basic formatting.",
+        "parameters": {
+          "document_path": { "type": "string", "required": true },
+          "plan_path": { "type": "string", "required": true },
+          "doc_type_spec": { "type": "object", "required": false, "description": "Doc type specification from doc-types.json for additional format-specific checks." }
+        },
+        "returns": {
+          "front_matter_valid": "boolean",
+          "front_matter_errors": ["string"],
+          "sections_found": ["string"],
+          "sections_missing": ["string"],
+          "heading_hierarchy_valid": "boolean",
+          "heading_errors": ["string"],
+          "placeholder_text_found": [
+            {
+              "text": "string",
+              "location": "string"
+            }
+          ],
+          "word_counts": {
+            "total": "integer",
+            "by_section": { "<section_title>": "integer" }
+          },
+          "findings": ["object"]
+        }
+      },
+      {
+        "name": "check_citations",
+        "description": "Extract all citations from the document, validate them against the evidence pack, and identify unsupported claims. Performs both reference validation and content verification.",
+        "parameters": {
+          "document_path": { "type": "string", "required": true },
+          "evidence_pack_path": { "type": "string", "required": true },
+          "deep_verify_sample_size": { "type": "integer", "default": 20, "description": "Number of citations to deeply verify (claim vs source content)." },
+          "detect_uncited_claims": { "type": "boolean", "default": true }
+        },
+        "returns": {
+          "total_citations": "integer",
+          "valid_citations": "integer",
+          "invalid_citations": [
+            {
+              "citation": "string",
+              "reason": "string",
+              "location": "string"
+            }
+          ],
+          "deep_verification_results": [
+            {
+              "citation": "string",
+              "claim_text": "string",
+              "source_content_excerpt": "string",
+              "match_result": "confirmed|partial_match|mismatch|source_unavailable",
+              "explanation": "string"
+            }
+          ],
+          "uncited_claims": [
+            {
+              "claim_text": "string",
+              "location": "string",
+              "claim_type": "string",
+              "heuristic_rule": "string"
+            }
+          ],
+          "findings": ["object"]
+        }
+      },
+      {
+        "name": "score_confidence",
+        "description": "Calculate the weighted confidence score based on all verification check results. Applies the scoring model defined in system.md and determines the pass/fail verdict.",
+        "parameters": {
+          "structure_results": { "type": "object", "required": true },
+          "citation_results": { "type": "object", "required": true },
+          "link_results": { "type": "object", "required": true },
+          "formatting_results": { "type": "object", "required": true },
+          "audience_results": { "type": "object", "required": true },
+          "content_results": { "type": "object", "required": true }
+        },
+        "returns": {
+          "confidence_score": "integer (0-100)",
+          "verdict": "PASS|FAIL",
+          "category_scores": {
+            "structure_completeness": "object",
+            "content_quality": "object",
+            "citation_validity": "object",
+            "link_integrity": "object",
+            "formatting_correctness": "object",
+            "audience_alignment": "object"
+          },
+          "critical_findings_count": "integer",
+          "major_findings_count": "integer",
+          "minor_findings_count": "integer",
+          "auto_fail_reasons": ["string"]
+        }
+      },
+      {
+        "name": "generate_verdict",
+        "description": "Compile the final verification verdict document including score, findings, repair notes, and summary. Writes the verdict to the artifacts directory.",
+        "parameters": {
+          "run_id": { "type": "string", "required": true },
+          "job_id": { "type": "string", "required": true },
+          "score_result": { "type": "object", "required": true },
+          "all_findings": { "type": "array", "required": true },
+          "acceptance_checklist_path": { "type": "string", "required": true }
+        },
+        "returns": {
+          "verdict_path": "string",
+          "verdict": "PASS|FAIL",
+          "confidence_score": "integer",
+          "findings_count": {
+            "critical": "integer",
+            "major": "integer",
+            "minor": "integer",
+            "info": "integer"
+          },
+          "repair_notes_count": "integer"
+        }
+      }
+    ]
+  }
+}

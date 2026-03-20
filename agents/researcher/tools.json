@@ -1,0 +1,204 @@
+{
+  "agent": "researcher",
+  "tool_groups": {
+    "mcp_tools": [
+      {
+        "name": "clickup_mcp",
+        "description": "Search and retrieve tasks, comments, and custom fields from the ClickUp workspace. Used to find project context, requirements, decisions, and historical documentation tasks.",
+        "access_level": "read_only",
+        "operations": [
+          "get_task",
+          "search_tasks",
+          "get_task_comments",
+          "get_custom_fields",
+          "list_tasks",
+          "get_space_tags"
+        ]
+      },
+      {
+        "name": "slack_adapter",
+        "description": "Search and retrieve messages, threads, and channel history from Slack. Used to find informal decisions, discussions, and knowledge not captured in formal documents.",
+        "access_level": "read_only",
+        "operations": [
+          "search_messages",
+          "get_thread",
+          "get_channel_history",
+          "list_channels",
+          "get_user_info"
+        ],
+        "constraints": {
+          "private_channels": "requires_explicit_authorization",
+          "direct_messages": "never_accessible",
+          "max_results_per_query": 50
+        }
+      },
+      {
+        "name": "gmail_adapter",
+        "description": "Search and retrieve email threads from the connected Gmail account. Used to find decision communications, stakeholder approvals, and external correspondence.",
+        "access_level": "read_only",
+        "operations": [
+          "search_emails",
+          "get_thread",
+          "get_message",
+          "list_labels"
+        ],
+        "constraints": {
+          "confidential_threads": "skip_unless_authorized",
+          "max_results_per_query": 25
+        }
+      },
+      {
+        "name": "drive_adapter",
+        "description": "Search and retrieve documents, spreadsheets, and files from Google Drive. Used to find existing documentation, templates, and reference materials.",
+        "access_level": "read_only",
+        "operations": [
+          "search_files",
+          "get_file_metadata",
+          "get_file_content",
+          "list_folder",
+          "get_file_versions"
+        ],
+        "constraints": {
+          "max_file_size_mb": 10,
+          "supported_formats": ["docs", "sheets", "slides", "pdf", "md", "txt"]
+        }
+      },
+      {
+        "name": "nova_act_browser",
+        "description": "Primary web research tool. Uses Nova Act for intelligent web browsing, search, and content extraction. Preferred over Playwright for its natural language navigation capabilities.",
+        "access_level": "read_only",
+        "role": "primary",
+        "operations": [
+          "navigate",
+          "search",
+          "extract_content",
+          "screenshot",
+          "get_page_text"
+        ],
+        "constraints": {
+          "respect_robots_txt": true,
+          "max_pages_per_session": 20,
+          "timeout_per_page_ms": 30000
+        }
+      },
+      {
+        "name": "playwright_browser",
+        "description": "Fallback web research tool. Used when Nova Act is unavailable or encounters errors. Provides programmatic browser automation for web content retrieval.",
+        "access_level": "read_only",
+        "role": "fallback",
+        "operations": [
+          "goto",
+          "get_content",
+          "screenshot",
+          "evaluate",
+          "wait_for_selector"
+        ],
+        "constraints": {
+          "respect_robots_txt": true,
+          "max_pages_per_session": 15,
+          "timeout_per_page_ms": 30000
+        }
+      },
+      {
+        "name": "filesystem_mcp",
+        "description": "Local filesystem access for writing evidence packs and reading handoff payloads.",
+        "access_level": "read_write",
+        "root_paths": [
+          "workspace/artifacts/",
+          "workspace/jobs/"
+        ],
+        "operations": [
+          "read_file",
+          "write_file",
+          "list_directory"
+        ]
+      }
+    ],
+    "internal_tools": [
+      {
+        "name": "search_workspace",
+        "description": "Unified search across all connected systems. Accepts a natural language query and returns results from ClickUp, Slack, Gmail, Drive, and web in a normalized format. Orchestrates individual tool calls internally.",
+        "parameters": {
+          "query": { "type": "string", "required": true, "description": "Natural language search query." },
+          "systems": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["clickup", "slack", "gmail", "drive", "web"] },
+            "default": ["clickup", "slack", "gmail", "drive", "web"],
+            "description": "Which systems to search. Defaults to all."
+          },
+          "max_results_per_system": { "type": "integer", "default": 10 },
+          "date_range": {
+            "type": "object",
+            "properties": {
+              "from": { "type": "string", "format": "date" },
+              "to": { "type": "string", "format": "date" }
+            },
+            "required": false
+          }
+        },
+        "returns": {
+          "results": [
+            {
+              "system": "string",
+              "items": [
+                {
+                  "id": "string",
+                  "title": "string",
+                  "snippet": "string",
+                  "uri": "string",
+                  "relevance": "float",
+                  "timestamp": "string"
+                }
+              ]
+            }
+          ],
+          "total_results": "integer",
+          "search_duration_ms": "integer"
+        }
+      },
+      {
+        "name": "fetch_document",
+        "description": "Retrieve full content of a specific document by its URI. Handles different source types (ClickUp task, Drive doc, Slack thread, web page) and returns normalized content.",
+        "parameters": {
+          "uri": { "type": "string", "required": true, "description": "The URI of the document to fetch." },
+          "source_type": { "type": "string", "enum": ["clickup_task", "drive_doc", "slack_thread", "gmail_thread", "web_page"], "required": true },
+          "extract_mode": { "type": "string", "enum": ["full", "summary", "excerpt"], "default": "full" }
+        },
+        "returns": {
+          "content": "string",
+          "metadata": {
+            "title": "string",
+            "author": "string",
+            "last_modified": "string",
+            "word_count": "integer",
+            "source_type": "string"
+          },
+          "fetch_status": "string"
+        }
+      },
+      {
+        "name": "create_evidence_pack",
+        "description": "Compile all gathered sources, summary, and gaps into a structured evidence pack conforming to the evidence-schema.json specification. Validates the pack before writing to disk.",
+        "parameters": {
+          "run_id": { "type": "string", "required": true },
+          "sources": { "type": "array", "required": true, "description": "Array of source objects." },
+          "summary": { "type": "string", "required": true, "description": "Narrative synthesis of findings." },
+          "gaps": { "type": "array", "required": true, "description": "Array of gap objects." }
+        },
+        "returns": {
+          "evidence_pack_path": "string",
+          "validation_result": {
+            "valid": "boolean",
+            "errors": ["string"]
+          },
+          "stats": {
+            "total_sources": "integer",
+            "by_type": "object",
+            "avg_relevance": "float",
+            "research_duration_ms": "integer"
+          }
+        }
+      }
+    ]
+  }
+}

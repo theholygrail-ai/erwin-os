@@ -1,0 +1,13 @@
+{
+  "name": "@erwin-os/classifier",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "@erwin-os/shared": "*",
+    "@erwin-os/schemas": "*"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}

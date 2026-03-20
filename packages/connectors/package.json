@@ -1,0 +1,16 @@
+{
+  "name": "@erwin-os/connectors",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "@erwin-os/shared": "*",
+    "@erwin-os/schemas": "*",
+    "@slack/socket-mode": "^2.0.0",
+    "@slack/web-api": "^7.0.0",
+    "googleapis": "^144.0.0"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}

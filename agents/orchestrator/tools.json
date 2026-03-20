@@ -1,0 +1,157 @@
+{
+  "agent": "orchestrator",
+  "tool_groups": {
+    "mcp_tools": [
+      {
+        "name": "clickup_mcp",
+        "description": "Interface to the ClickUp project management system. Used to read job board tasks, retrieve task details, update task statuses, read comments, and query workspace data.",
+        "access_level": "read_write",
+        "write_scope": ["task_status", "task_comments"],
+        "operations": [
+          "get_task",
+          "list_tasks",
+          "update_task_status",
+          "add_comment",
+          "get_custom_fields",
+          "search_tasks"
+        ]
+      },
+      {
+        "name": "filesystem_mcp",
+        "description": "Local filesystem access for reading and writing job artifacts, execution plans, logs, and intermediate outputs.",
+        "access_level": "read_write",
+        "root_paths": [
+          "workspace/jobs/",
+          "workspace/artifacts/",
+          "workspace/logs/",
+          "workspace/output/"
+        ],
+        "operations": [
+          "read_file",
+          "write_file",
+          "list_directory",
+          "create_directory",
+          "move_file"
+        ]
+      },
+      {
+        "name": "memory_mcp",
+        "description": "Persistent knowledge graph for storing and retrieving organizational context, past decisions, templates metadata, and agent performance data.",
+        "access_level": "read_write",
+        "operations": [
+          "create_entities",
+          "create_relations",
+          "search_nodes",
+          "read_graph",
+          "add_observations",
+          "delete_entities"
+        ]
+      },
+      {
+        "name": "queue_control",
+        "description": "Internal job queue management. Provides visibility into pending, active, parked, and completed jobs. Controls job lifecycle transitions.",
+        "access_level": "read_write",
+        "operations": [
+          "peek_queue",
+          "accept_job",
+          "park_job",
+          "resume_job",
+          "complete_job",
+          "fail_job",
+          "get_queue_stats"
+        ]
+      },
+      {
+        "name": "web_status",
+        "description": "Publishes pipeline status to the Erwin OS web dashboard. Allows the orchestrator to update real-time progress indicators visible to human operators.",
+        "access_level": "write",
+        "operations": [
+          "update_job_progress",
+          "post_status_event",
+          "set_pipeline_health",
+          "notify_operator"
+        ]
+      }
+    ],
+    "internal_tools": [
+      {
+        "name": "create_run",
+        "description": "Initialize a new pipeline run for a job. Creates the run context object, sets up artifact directories, and returns a run_id for tracking.",
+        "parameters": {
+          "job_id": { "type": "string", "required": true },
+          "job_payload": { "type": "object", "required": true },
+          "priority": { "type": "string", "enum": ["critical", "high", "normal", "low"], "default": "normal" }
+        },
+        "returns": {
+          "run_id": "string",
+          "artifact_path": "string",
+          "created_at": "string"
+        }
+      },
+      {
+        "name": "dispatch_agent",
+        "description": "Send a structured handoff payload to a worker agent, triggering its execution. Returns a dispatch receipt with tracking info.",
+        "parameters": {
+          "agent": { "type": "string", "enum": ["researcher", "planner", "builder", "verifier"], "required": true },
+          "run_id": { "type": "string", "required": true },
+          "handoff_payload": { "type": "object", "required": true },
+          "timeout_ms": { "type": "integer", "default": 600000 },
+          "retry_context": { "type": "object", "required": false, "description": "Included only on retry cycles. Contains repair_notes and previous attempt summary." }
+        },
+        "returns": {
+          "dispatch_id": "string",
+          "agent": "string",
+          "dispatched_at": "string",
+          "expected_completion": "string"
+        }
+      },
+      {
+        "name": "update_job_status",
+        "description": "Update the status of a job in both the internal queue and ClickUp. Keeps all systems synchronized.",
+        "parameters": {
+          "job_id": { "type": "string", "required": true },
+          "status": { "type": "string", "enum": ["in_progress", "researching", "planning", "building", "verifying", "retrying", "awaiting_human_review", "escalated", "completed", "failed"], "required": true },
+          "metadata": { "type": "object", "required": false }
+        },
+        "returns": {
+          "updated": "boolean",
+          "synced_systems": ["string"]
+        }
+      },
+      {
+        "name": "check_queue",
+        "description": "Inspect the current state of the job queue. Returns counts, next available job, and any parked jobs awaiting input.",
+        "parameters": {
+          "include_parked": { "type": "boolean", "default": true },
+          "include_stats": { "type": "boolean", "default": true }
+        },
+        "returns": {
+          "pending_count": "integer",
+          "active_job": "object|null",
+          "parked_jobs": ["object"],
+          "stats": {
+            "completed_today": "integer",
+            "avg_duration_ms": "integer",
+            "escalation_rate": "float"
+          }
+        }
+      },
+      {
+        "name": "escalate_to_human",
+        "description": "Escalate a job to a human operator when automated resolution is not possible. Packages full context including all attempts, artifacts, and the specific blocker.",
+        "parameters": {
+          "job_id": { "type": "string", "required": true },
+          "run_id": { "type": "string", "required": true },
+          "reason": { "type": "string", "required": true },
+          "blocker_type": { "type": "string", "enum": ["retry_limit_exceeded", "ambiguous_requirements", "missing_sources", "conflicting_evidence", "tool_failure", "out_of_scope", "human_approval_required"], "required": true },
+          "context_bundle": { "type": "object", "required": true, "description": "Full job context including all intermediate artifacts and decision log." }
+        },
+        "returns": {
+          "escalation_id": "string",
+          "assigned_to": "string|null",
+          "escalated_at": "string"
+        }
+      }
+    ]
+  }
+}

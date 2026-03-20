@@ -1,0 +1,222 @@
+{
+  "schema_version": "1.0",
+  "description": "Verification checklist defining all checks the Verifier agent performs on every document. Each check has an ID, category, description, severity on failure, and evaluation method.",
+  "pass_threshold": 70,
+  "critical_auto_fail": true,
+  "checks": [
+    {
+      "id": "check-001",
+      "name": "structure_complete",
+      "category": "structure",
+      "description": "The document's overall structure is complete: it has valid front matter, a proper heading hierarchy, and conforms to the doc type specification.",
+      "severity_on_fail": "critical",
+      "evaluation": {
+        "method": "validate_structure",
+        "criteria": [
+          "Front matter block exists and is valid YAML",
+          "H1 or title field is present",
+          "At least one H2 section exists",
+          "Heading levels do not skip (e.g., no H4 directly under H2)"
+        ]
+      },
+      "weight_category": "structure_completeness",
+      "repair_target": "builder"
+    },
+    {
+      "id": "check-002",
+      "name": "all_sections_present",
+      "category": "structure",
+      "description": "Every required section defined in the documentation plan is present in the document. Section matching is case-insensitive with minor variation tolerance.",
+      "severity_on_fail": "critical",
+      "evaluation": {
+        "method": "validate_structure",
+        "criteria": [
+          "Extract all H2 headings from the document",
+          "Compare against plan.sections where required=true",
+          "Allow fuzzy matching (Levenshtein distance ≤ 3 or substring match)",
+          "Report each missing required section individually"
+        ]
+      },
+      "weight_category": "structure_completeness",
+      "repair_target": "builder"
+    },
+    {
+      "id": "check-003",
+      "name": "citations_valid",
+      "category": "citation",
+      "description": "All inline citations reference source_ids that exist in the evidence pack. No orphaned or fabricated citation references.",
+      "severity_on_fail": "critical",
+      "evaluation": {
+        "method": "check_citations",
+        "criteria": [
+          "Extract all [Evidence: src-XXX] patterns from the document",
+          "Look up each src-XXX in evidence_pack.sources[].source_id",
+          "Flag any citation where the source_id is not found",
+          "A single fabricated citation is a critical finding"
+        ]
+      },
+      "weight_category": "citation_validity",
+      "repair_target": "builder"
+    },
+    {
+      "id": "check-004",
+      "name": "links_working",
+      "category": "link",
+      "description": "All URLs in the document are accessible and return successful HTTP responses. Internal cross-references resolve to valid targets.",
+      "severity_on_fail": "major",
+      "evaluation": {
+        "method": "browser_navigation",
+        "criteria": [
+          "Extract all http/https URLs from the document",
+          "Navigate to each URL (max 30, sample if more)",
+          "Accept HTTP 200 and 3xx redirects that resolve to 200",
+          "Flag 4xx, 5xx, and unreachable URLs",
+          "Check internal anchor links (#heading-id) resolve within the document"
+        ],
+        "timeout_per_url_ms": 15000,
+        "max_urls": 30
+      },
+      "weight_category": "link_integrity",
+      "repair_target": "builder"
+    },
+    {
+      "id": "check-005",
+      "name": "no_fabricated_claims",
+      "category": "citation",
+      "description": "For a sample of cited claims, verify that the document's statement is supported by the actual evidence source content. Detect misrepresentation, exaggeration, or contradiction.",
+      "severity_on_fail": "major",
+      "evaluation": {
+        "method": "source_comparison",
+        "criteria": [
+          "Select up to 20 citations for deep verification",
+          "Extract the claim text surrounding each citation",
+          "Retrieve the cited source content from the evidence pack",
+          "Compare claim to source using semantic comparison",
+          "Flag mismatches as 'major', contradictions as 'critical'"
+        ],
+        "sample_size": 20
+      },
+      "weight_category": "citation_validity",
+      "repair_target": "builder"
+    },
+    {
+      "id": "check-006",
+      "name": "terminology_consistent",
+      "category": "content",
+      "description": "Technical terms and proper nouns are used consistently throughout the document. The same concept should not be referred to by different names without explicit definition.",
+      "severity_on_fail": "minor",
+      "evaluation": {
+        "method": "quality_rules",
+        "criteria": [
+          "Build a term frequency map across the document",
+          "Identify potential synonyms or variants referring to the same concept",
+          "Cross-reference against the organizational terminology database",
+          "Flag inconsistencies where two terms appear to reference the same thing"
+        ]
+      },
+      "weight_category": "content_quality",
+      "repair_target": "builder"
+    },
+    {
+      "id": "check-007",
+      "name": "audience_appropriate",
+      "category": "audience",
+      "description": "The document's language complexity, assumed knowledge, and explanation depth are appropriate for the target audience defined in the plan.",
+      "severity_on_fail": "minor",
+      "evaluation": {
+        "method": "quality_rules",
+        "criteria": [
+          "Read the plan's audience.technical_level",
+          "For 'novice': check that technical terms are defined, concepts are explained",
+          "For 'intermediate': check that domain basics are assumed but specialized concepts are introduced",
+          "For 'advanced'/'expert': check that unnecessary explanation is minimal",
+          "Flag unexplained jargon for novice audiences",
+          "Flag over-explanation for expert audiences"
+        ]
+      },
+      "weight_category": "audience_alignment",
+      "repair_target": "builder"
+    },
+    {
+      "id": "check-008",
+      "name": "formatting_correct",
+      "category": "formatting",
+      "description": "The document follows Markdown formatting standards: consistent heading levels, proper code blocks with language identifiers, well-formed tables, and clean link syntax.",
+      "severity_on_fail": "minor",
+      "evaluation": {
+        "method": "validate_structure",
+        "criteria": [
+          "Code blocks use fenced syntax with language identifiers",
+          "Tables have header rows and consistent column counts",
+          "No raw HTML (unless doc type permits)",
+          "No broken Markdown syntax (unclosed bold/italic, malformed links)",
+          "Lists use consistent markers (all bullets or all numbers, not mixed)",
+          "Images have alt text"
+        ]
+      },
+      "weight_category": "formatting_correctness",
+      "repair_target": "builder"
+    },
+    {
+      "id": "check-009",
+      "name": "front_matter_complete",
+      "category": "structure",
+      "description": "The YAML front matter contains all required fields as defined by the doc type specification and the documentation plan.",
+      "severity_on_fail": "critical",
+      "evaluation": {
+        "method": "validate_structure",
+        "criteria": [
+          "Parse YAML front matter block",
+          "Check all required fields from doc-types.json for the specified doc_type",
+          "Check all required fields from plan.front_matter.fields",
+          "Verify non-empty values for required fields",
+          "Validate date fields are ISO-8601 format",
+          "Verify status field is 'draft'"
+        ]
+      },
+      "weight_category": "structure_completeness",
+      "repair_target": "builder"
+    },
+    {
+      "id": "check-010",
+      "name": "confidence_above_threshold",
+      "category": "meta",
+      "description": "The overall weighted confidence score meets or exceeds the pass threshold of 70. This is the final gating check after all other checks have been evaluated.",
+      "severity_on_fail": "critical",
+      "evaluation": {
+        "method": "score_confidence",
+        "criteria": [
+          "Calculate weighted scores for all categories",
+          "Sum to produce overall confidence score (0-100)",
+          "Score >= 70 passes this check",
+          "Score < 70 fails this check regardless of individual category scores",
+          "Any critical finding in other checks forces this to fail"
+        ]
+      },
+      "weight_category": "meta",
+      "repair_target": "orchestrator"
+    }
+  ],
+  "severity_definitions": {
+    "critical": {
+      "description": "Fundamental deficiency that makes the document unfit for purpose. Triggers automatic FAIL regardless of overall score.",
+      "score_impact": "Zeroes the affected category score.",
+      "requires_fix_before_pass": true
+    },
+    "major": {
+      "description": "Significant issue that materially reduces document quality or accuracy. Multiple major issues can push the score below threshold.",
+      "score_impact": "-15 to -30 points from category score per finding.",
+      "requires_fix_before_pass": false
+    },
+    "minor": {
+      "description": "Quality issue that should be fixed but doesn't undermine the document's core value. Unlikely to cause a FAIL alone.",
+      "score_impact": "-5 to -10 points from category score per finding.",
+      "requires_fix_before_pass": false
+    },
+    "info": {
+      "description": "Observation or suggestion for improvement. Does not affect score. Included for human reviewer awareness.",
+      "score_impact": "No impact.",
+      "requires_fix_before_pass": false
+    }
+  }
+}

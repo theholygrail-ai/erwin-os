@@ -1,0 +1,14 @@
+{
+  "name": "@erwin-os/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "@erwin-os/shared": "*",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "playwright": "^1.49.0"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}

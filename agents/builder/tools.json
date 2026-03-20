@@ -1,0 +1,153 @@
+{
+  "agent": "builder",
+  "tool_groups": {
+    "mcp_tools": [
+      {
+        "name": "filesystem_mcp",
+        "description": "Local filesystem access for reading evidence packs, documentation plans, handoff payloads, and writing completed documents and build reports.",
+        "access_level": "read_write",
+        "root_paths": [
+          "workspace/artifacts/",
+          "workspace/templates/",
+          "workspace/output/"
+        ],
+        "operations": [
+          "read_file",
+          "write_file",
+          "list_directory",
+          "create_directory"
+        ]
+      },
+      {
+        "name": "template_style_guide",
+        "description": "Access to organizational style guide rules, terminology databases, and formatting standards. Ensures documents conform to established conventions.",
+        "access_level": "read_only",
+        "operations": [
+          "get_style_rules",
+          "lookup_terminology",
+          "get_formatting_standards",
+          "get_brand_guidelines",
+          "check_term_consistency"
+        ],
+        "capabilities": {
+          "terminology_database": "Map of preferred terms and their deprecated alternatives",
+          "style_rules": "Active voice, concision, audience-appropriate complexity, citation format",
+          "brand_guidelines": "Naming conventions, product references, legal disclaimers"
+        }
+      },
+      {
+        "name": "export_render",
+        "description": "Converts Markdown documents to PDF and DOCX formats. Applies organizational styling, page layout, headers/footers, and table of contents generation.",
+        "access_level": "read_write",
+        "operations": [
+          "render_pdf",
+          "render_docx",
+          "preview_layout",
+          "get_available_styles"
+        ],
+        "supported_formats": {
+          "pdf": {
+            "engine": "weasyprint",
+            "features": ["toc", "page_numbers", "headers_footers", "custom_css", "cover_page"]
+          },
+          "docx": {
+            "engine": "python-docx",
+            "features": ["toc", "styles", "headers_footers", "page_breaks", "metadata"]
+          }
+        }
+      },
+      {
+        "name": "playwright_browser",
+        "description": "Fallback PDF rendering tool. Used only when the primary export_render tool fails. Renders the Markdown as HTML in a headless browser and captures as PDF.",
+        "access_level": "read_only",
+        "role": "fallback",
+        "operations": [
+          "goto",
+          "pdf",
+          "screenshot",
+          "wait_for_selector"
+        ],
+        "constraints": {
+          "use_only_when": "export_render.render_pdf fails",
+          "timeout_ms": 30000
+        }
+      }
+    ],
+    "internal_tools": [
+      {
+        "name": "write_section",
+        "description": "Write a single section of the document based on the plan outline and evidence. Handles evidence lookup, content generation, citation insertion, and word count tracking.",
+        "parameters": {
+          "run_id": { "type": "string", "required": true },
+          "section_id": { "type": "string", "required": true, "description": "Section ID from the documentation plan." },
+          "section_plan": { "type": "object", "required": true, "description": "The section definition from the plan including title, purpose, key_points, evidence_refs." },
+          "evidence_pack_path": { "type": "string", "required": true },
+          "audience": { "type": "object", "required": true, "description": "Audience definition from the plan." },
+          "style_context": { "type": "object", "required": false, "description": "Style guide overrides for this section." }
+        },
+        "returns": {
+          "content": "string",
+          "word_count": "integer",
+          "citations_used": ["string"],
+          "evidence_gaps": ["string"],
+          "section_complete": "boolean"
+        }
+      },
+      {
+        "name": "assemble_document",
+        "description": "Combine front matter and all written sections into a single Markdown document. Validates structure, generates table of contents if needed, and ensures consistent formatting.",
+        "parameters": {
+          "run_id": { "type": "string", "required": true },
+          "front_matter": { "type": "object", "required": true },
+          "sections": {
+            "type": "array",
+            "required": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "section_id": { "type": "string" },
+                "content": { "type": "string" }
+              }
+            }
+          },
+          "include_toc": { "type": "boolean", "default": true },
+          "plan_path": { "type": "string", "required": true }
+        },
+        "returns": {
+          "document_path": "string",
+          "total_word_count": "integer",
+          "total_sections": "integer",
+          "validation": {
+            "valid": "boolean",
+            "warnings": ["string"]
+          }
+        }
+      },
+      {
+        "name": "render_export",
+        "description": "Render the assembled Markdown document into the requested export formats (PDF, DOCX). Orchestrates the export_render MCP tool and falls back to playwright_browser for PDF if needed.",
+        "parameters": {
+          "run_id": { "type": "string", "required": true },
+          "document_path": { "type": "string", "required": true },
+          "formats": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["pdf", "docx"] },
+            "required": true
+          },
+          "style_preset": { "type": "string", "default": "default", "description": "Which styling preset to apply to exports." }
+        },
+        "returns": {
+          "exports": [
+            {
+              "format": "string",
+              "path": "string",
+              "status": "string",
+              "file_size_bytes": "integer",
+              "error": "string|null"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,234 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://erwin-os.internal/schemas/evidence-pack/v1",
+  "title": "Evidence Pack",
+  "description": "Structured output produced by the Researcher agent containing all source material, synthesis, and gap analysis for a documentation job.",
+  "type": "object",
+  "required": ["schema_version", "run_id", "job_id", "sources", "summary", "gaps", "total_sources", "research_duration_ms", "metadata"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Version of the evidence pack schema."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "The pipeline run identifier this evidence pack belongs to."
+    },
+    "job_id": {
+      "type": "string",
+      "description": "The originating job identifier."
+    },
+    "sources": {
+      "type": "array",
+      "description": "Ordered list of all sources discovered and retrieved during research.",
+      "items": {
+        "type": "object",
+        "required": ["source_id", "type", "id", "title", "content_uri", "relevance_score"],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "pattern": "^src-[0-9]{3}$",
+            "description": "Unique identifier for this source within the evidence pack. Format: src-001, src-002, etc."
+          },
+          "type": {
+            "type": "string",
+            "enum": ["clickup_task", "clickup_comment", "slack_message", "slack_thread", "gmail_thread", "gmail_message", "drive_document", "drive_spreadsheet", "drive_presentation", "web_page", "web_article", "api_documentation", "internal_wiki", "other"],
+            "description": "The source system and content type."
+          },
+          "id": {
+            "type": "string",
+            "description": "The native identifier in the source system (e.g., ClickUp task ID, Drive file ID, Slack message timestamp)."
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable title or subject line of the source."
+          },
+          "content_uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "URI to access the source content. May be an internal workspace path for cached content."
+          },
+          "relevance_score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "How directly this source addresses the documentation need. 1.0 = perfectly relevant."
+          },
+          "author": {
+            "type": "string",
+            "description": "Person or system that created the source content."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the source content was originally created."
+          },
+          "last_modified": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the source content was last modified."
+          },
+          "access_status": {
+            "type": "string",
+            "enum": ["retrieved", "partial", "restricted", "unavailable"],
+            "default": "retrieved",
+            "description": "Whether the content was fully accessible."
+          },
+          "completeness": {
+            "type": "string",
+            "enum": ["full", "partial", "metadata_only"],
+            "default": "full",
+            "description": "How much of the source content was captured."
+          },
+          "excerpt": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Key excerpt or abstract from the source. Required if completeness is 'partial' or 'metadata_only'."
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Classification tags applied by the Researcher (e.g., 'decision', 'requirement', 'specification', 'discussion')."
+          },
+          "confidence_note": {
+            "type": "string",
+            "description": "Any caveats about this source's reliability or currency."
+          }
+        }
+      },
+      "minItems": 0
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 100,
+      "maxLength": 3000,
+      "description": "Narrative synthesis of all findings. Must reference sources by source_id using [src:source_id] notation. Should cover: what was found, key themes, contradictions, and overall assessment of evidence sufficiency."
+    },
+    "gaps": {
+      "type": "array",
+      "description": "Explicit list of information that was sought but not found.",
+      "items": {
+        "type": "object",
+        "required": ["gap_id", "query", "systems_searched", "reason_not_found"],
+        "properties": {
+          "gap_id": {
+            "type": "string",
+            "pattern": "^gap-[0-9]{3}$",
+            "description": "Unique identifier for this gap. Format: gap-001, gap-002, etc."
+          },
+          "query": {
+            "type": "string",
+            "description": "What was being searched for."
+          },
+          "systems_searched": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["clickup", "slack", "gmail", "drive", "web"] },
+            "description": "Which systems were searched for this query."
+          },
+          "reason_not_found": {
+            "type": "string",
+            "enum": ["no_results", "system_unavailable", "access_restricted", "timeout", "out_of_scope", "ambiguous_query"],
+            "description": "Why the information was not found."
+          },
+          "impact": {
+            "type": "string",
+            "enum": ["blocking", "degrading", "minor"],
+            "description": "How this gap affects the document production. 'blocking' means the document cannot be written without this information."
+          },
+          "recommendation": {
+            "type": "string",
+            "description": "Suggested action to resolve the gap (e.g., 'Ask project lead', 'Check with DevOps team')."
+          }
+        }
+      }
+    },
+    "contradictions": {
+      "type": "array",
+      "description": "Cases where sources provide conflicting information.",
+      "items": {
+        "type": "object",
+        "required": ["description", "source_ids"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Description of the contradiction."
+          },
+          "source_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 2,
+            "description": "The source_ids of the conflicting sources."
+          },
+          "researcher_assessment": {
+            "type": "string",
+            "description": "The Researcher's assessment of which source is more likely correct and why."
+          }
+        }
+      }
+    },
+    "total_sources": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of sources in the sources array."
+    },
+    "research_duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total elapsed time for the research cycle in milliseconds."
+    },
+    "sufficiency_assessment": {
+      "type": "object",
+      "description": "The Researcher's assessment of whether enough evidence exists to proceed with document creation.",
+      "properties": {
+        "sufficient": {
+          "type": "boolean",
+          "description": "Whether the evidence is sufficient to write the document."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence that the evidence pack supports successful document creation."
+        },
+        "recommendation": {
+          "type": "string",
+          "enum": ["proceed", "proceed_with_caveats", "needs_more_research", "escalate"],
+          "description": "Recommended next action."
+        },
+        "caveats": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Specific caveats if recommendation is 'proceed_with_caveats'."
+        }
+      },
+      "required": ["sufficient", "confidence", "recommendation"]
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["researcher_version", "search_systems_used", "created_at"],
+      "properties": {
+        "researcher_version": {
+          "type": "string",
+          "description": "Version of the Researcher agent that produced this pack."
+        },
+        "search_systems_used": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Which source systems were actually queried."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this evidence pack was finalized."
+        },
+        "handoff_received_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the Researcher received the handoff from the Orchestrator."
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

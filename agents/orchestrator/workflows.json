@@ -1,0 +1,228 @@
+{
+  "agent": "orchestrator",
+  "workflows": {
+    "main_pipeline": {
+      "name": "Document Production Pipeline",
+      "description": "End-to-end workflow for receiving a job from the board, orchestrating all worker agents, and delivering a verified document for human review.",
+      "trigger": "new_job_in_queue",
+      "steps": [
+        {
+          "id": "receive_job",
+          "action": "Accept job from queue and parse the task payload.",
+          "tools": ["queue_control.accept_job", "clickup_mcp.get_task"],
+          "inputs": { "source": "job_queue" },
+          "outputs": { "job_payload": "object", "job_id": "string" },
+          "on_success": "assess_complexity",
+          "on_failure": "escalation_flow",
+          "timeout_ms": 15000
+        },
+        {
+          "id": "assess_complexity",
+          "action": "Analyze the job to determine complexity score, estimated duration, risk factors, and required agents.",
+          "tools": ["memory_mcp.search_nodes"],
+          "inputs": { "job_payload": "from:receive_job" },
+          "outputs": {
+            "complexity_score": "integer(1-5)",
+            "estimated_duration_ms": "integer",
+            "risk_factors": ["string"],
+            "required_agents": ["string"],
+            "parallelizable_steps": ["string"]
+          },
+          "on_success": "create_plan",
+          "on_failure": "escalation_flow",
+          "timeout_ms": 30000
+        },
+        {
+          "id": "create_plan",
+          "action": "Produce a versioned execution plan specifying agent dispatch order, handoff payloads, timeouts, and success criteria for each stage.",
+          "tools": ["create_run", "filesystem_mcp.write_file"],
+          "inputs": {
+            "job_payload": "from:receive_job",
+            "complexity_assessment": "from:assess_complexity"
+          },
+          "outputs": {
+            "run_id": "string",
+            "execution_plan": "object",
+            "plan_version": "integer"
+          },
+          "on_success": "dispatch_researcher",
+          "on_failure": "escalation_flow",
+          "timeout_ms": 30000
+        },
+        {
+          "id": "dispatch_researcher",
+          "action": "Send the Researcher agent a handoff with the job context, research scope, and evidence requirements.",
+          "tools": ["dispatch_agent", "update_job_status"],
+          "inputs": {
+            "agent": "researcher",
+            "run_id": "from:create_plan",
+            "handoff_payload": {
+              "job_context": "from:receive_job",
+              "research_scope": "from:create_plan.execution_plan.research_scope",
+              "expected_outputs": ["evidence_pack"]
+            }
+          },
+          "outputs": { "evidence_pack": "object" },
+          "on_success": "dispatch_planner",
+          "on_failure": "retry_flow",
+          "timeout_ms": 600000,
+          "status_update": "researching"
+        },
+        {
+          "id": "dispatch_planner",
+          "action": "Send the Planner agent the job context plus the evidence pack to produce a documentation plan.",
+          "tools": ["dispatch_agent", "update_job_status"],
+          "inputs": {
+            "agent": "planner",
+            "run_id": "from:create_plan",
+            "handoff_payload": {
+              "job_context": "from:receive_job",
+              "evidence_pack": "from:dispatch_researcher",
+              "expected_outputs": ["documentation_plan", "acceptance_checklist"]
+            }
+          },
+          "outputs": { "documentation_plan": "object", "acceptance_checklist": "object" },
+          "on_success": "dispatch_builder",
+          "on_failure": "retry_flow",
+          "timeout_ms": 300000,
+          "status_update": "planning"
+        },
+        {
+          "id": "dispatch_builder",
+          "action": "Send the Builder agent the documentation plan and evidence pack to produce the draft document.",
+          "tools": ["dispatch_agent", "update_job_status"],
+          "inputs": {
+            "agent": "builder",
+            "run_id": "from:create_plan",
+            "handoff_payload": {
+              "job_context": "from:receive_job",
+              "documentation_plan": "from:dispatch_planner",
+              "evidence_pack": "from:dispatch_researcher",
+              "expected_outputs": ["document_draft", "export_artifacts"]
+            }
+          },
+          "outputs": { "document_draft": "object", "export_artifacts": ["object"] },
+          "on_success": "dispatch_verifier",
+          "on_failure": "retry_flow",
+          "timeout_ms": 900000,
+          "status_update": "building"
+        },
+        {
+          "id": "dispatch_verifier",
+          "action": "Send the Verifier agent the draft document, evidence pack, and acceptance checklist for validation.",
+          "tools": ["dispatch_agent", "update_job_status"],
+          "inputs": {
+            "agent": "verifier",
+            "run_id": "from:create_plan",
+            "handoff_payload": {
+              "job_context": "from:receive_job",
+              "document_draft": "from:dispatch_builder",
+              "evidence_pack": "from:dispatch_researcher",
+              "acceptance_checklist": "from:dispatch_planner",
+              "expected_outputs": ["verification_verdict"]
+            }
+          },
+          "outputs": { "verification_verdict": "object" },
+          "on_success": "evaluate_result",
+          "on_failure": "retry_flow",
+          "timeout_ms": 300000,
+          "status_update": "verifying"
+        },
+        {
+          "id": "evaluate_result",
+          "action": "Inspect the Verifier's verdict. If PASS, advance to completion. If FAIL, determine repair targets and initiate retry.",
+          "tools": ["filesystem_mcp.read_file"],
+          "inputs": {
+            "verification_verdict": "from:dispatch_verifier"
+          },
+          "outputs": { "decision": "string", "repair_targets": ["string"] },
+          "on_pass": "complete_or_retry",
+          "on_fail": "retry_flow",
+          "timeout_ms": 15000
+        },
+        {
+          "id": "complete_or_retry",
+          "action": "If verdict is PASS, finalize the document and place in output queue for human review. If verdict is FAIL and retries remain, enter retry_flow.",
+          "tools": ["update_job_status", "queue_control.complete_job", "web_status.notify_operator"],
+          "inputs": {
+            "verification_verdict": "from:dispatch_verifier",
+            "retry_count": "from:run_context"
+          },
+          "outputs": { "final_status": "string", "output_path": "string" },
+          "on_pass": null,
+          "on_retry": "retry_flow",
+          "timeout_ms": 15000,
+          "status_update": "awaiting_human_review"
+        }
+      ]
+    },
+    "retry_flow": {
+      "name": "Targeted Retry Flow",
+      "description": "Re-execute specific pipeline stages based on the Verifier's repair notes. Only re-dispatches agents whose outputs need correction.",
+      "trigger": "verifier_verdict_fail",
+      "max_cycles": 3,
+      "steps": [
+        {
+          "id": "parse_repair_notes",
+          "action": "Extract specific deficiencies from the Verifier's repair notes and map each to the responsible pipeline stage.",
+          "inputs": { "verification_verdict": "from:evaluate_result" },
+          "outputs": {
+            "repair_map": {
+              "researcher": ["list of research gaps"],
+              "planner": ["list of plan deficiencies"],
+              "builder": ["list of writing issues"]
+            }
+          }
+        },
+        {
+          "id": "check_retry_budget",
+          "action": "Verify that the retry count has not exceeded the maximum. If exceeded, route to escalation_flow.",
+          "inputs": { "retry_count": "from:run_context", "max_retries": 3 },
+          "on_within_budget": "re_dispatch_affected_agents",
+          "on_budget_exceeded": "escalation_flow"
+        },
+        {
+          "id": "re_dispatch_affected_agents",
+          "action": "Re-dispatch only the agents whose outputs were flagged. Append repair instructions to their handoff payloads. Agents not flagged retain their previous outputs.",
+          "tools": ["dispatch_agent", "update_job_status"],
+          "inputs": { "repair_map": "from:parse_repair_notes" },
+          "outputs": { "updated_artifacts": "object" },
+          "on_success": "dispatch_verifier",
+          "status_update": "retrying"
+        },
+        {
+          "id": "re_verify",
+          "action": "Re-dispatch the Verifier with the updated artifacts. Route back to evaluate_result.",
+          "tools": ["dispatch_agent"],
+          "on_success": "main_pipeline.evaluate_result"
+        }
+      ]
+    },
+    "escalation_flow": {
+      "name": "Human Escalation Flow",
+      "description": "Package all job context, artifacts, and the specific blocker for human review. Notify the operator and park the job.",
+      "trigger": "retry_limit_exceeded OR unresolvable_blocker",
+      "steps": [
+        {
+          "id": "package_context",
+          "action": "Assemble the complete job context: original payload, execution plan, all intermediate artifacts, decision log, and the specific blocker description.",
+          "tools": ["filesystem_mcp.read_file"],
+          "outputs": { "context_bundle": "object" }
+        },
+        {
+          "id": "escalate",
+          "action": "Submit the escalation to the human operator queue with full context.",
+          "tools": ["escalate_to_human", "web_status.notify_operator"],
+          "inputs": { "context_bundle": "from:package_context" },
+          "outputs": { "escalation_id": "string" }
+        },
+        {
+          "id": "park_job",
+          "action": "Park the job in the queue awaiting human resolution. The Orchestrator may proceed to other jobs.",
+          "tools": ["queue_control.park_job", "update_job_status"],
+          "status_update": "escalated"
+        }
+      ]
+    }
+  }
+}

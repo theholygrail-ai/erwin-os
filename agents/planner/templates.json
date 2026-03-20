@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "description": "Documentation template library for the Erwin OS Planner agent. Each template defines the standard structure, audience, and expected characteristics for a document type.",
+  "templates": [
+    {
+      "name": "Technical Specification",
+      "doc_type": "technical_spec",
+      "description": "Detailed technical specification for a system, feature, or integration. Defines requirements, architecture, interfaces, and acceptance criteria.",
+      "audience": "Engineers, architects, and technical leads",
+      "typical_length": "2000–5000 words",
+      "sections": [
+        { "title": "Overview", "description": "High-level summary of what is being specified, the problem it solves, and the scope of this document.", "required": true },
+        { "title": "Background & Context", "description": "Business context, prior decisions, and the motivation driving this specification.", "required": true },
+        { "title": "Requirements", "description": "Functional and non-functional requirements, clearly numbered. Include constraints and assumptions.", "required": true },
+        { "title": "System Design", "description": "Architecture overview, component diagram, data flow, and key technical decisions with rationale.", "required": true },
+        { "title": "API / Interface Contracts", "description": "Endpoints, schemas, input/output formats, error codes, and versioning strategy.", "required": false },
+        { "title": "Data Model", "description": "Entity definitions, relationships, storage considerations, and migration notes.", "required": false },
+        { "title": "Security Considerations", "description": "Authentication, authorization, data protection, and threat model notes.", "required": true },
+        { "title": "Testing Strategy", "description": "Unit, integration, and E2E testing approach. Key test scenarios.", "required": true },
+        { "title": "Rollout Plan", "description": "Deployment phases, feature flags, rollback procedures, and monitoring.", "required": false },
+        { "title": "Open Questions", "description": "Unresolved decisions, pending inputs, and areas needing further discussion.", "required": false },
+        { "title": "References", "description": "Links to related specs, ADRs, tickets, and external documentation.", "required": true }
+      ]
+    },
+    {
+      "name": "Standard Operating Procedure",
+      "doc_type": "sop",
+      "description": "Step-by-step operational procedure for a recurring task or process. Must be unambiguous and executable by the target operator.",
+      "audience": "Operations staff, support engineers, or designated process owners",
+      "typical_length": "1000–3000 words",
+      "sections": [
+        { "title": "Purpose", "description": "Why this SOP exists, what process it governs, and when it should be followed.", "required": true },
+        { "title": "Scope", "description": "What is covered and not covered by this procedure. Boundary conditions.", "required": true },
+        { "title": "Prerequisites", "description": "Required access, tools, permissions, and knowledge before starting.", "required": true },
+        { "title": "Procedure Steps", "description": "Numbered step-by-step instructions. Each step includes action, expected outcome, and what to do if the outcome is unexpected.", "required": true },
+        { "title": "Verification", "description": "How to confirm the procedure was completed successfully.", "required": true },
+        { "title": "Troubleshooting", "description": "Common issues, their symptoms, and resolution steps.", "required": true },
+        { "title": "Rollback / Recovery", "description": "How to undo the procedure if something goes wrong.", "required": false },
+        { "title": "Revision History", "description": "Version log with date, author, and summary of changes.", "required": true }
+      ]
+    },
+    {
+      "name": "Architecture Decision Note",
+      "doc_type": "architecture_note",
+      "description": "Record of a significant architecture or design decision, including context, options considered, decision made, and consequences.",
+      "audience": "Engineering team, architects, and future maintainers",
+      "typical_length": "800–2000 words",
+      "sections": [
+        { "title": "Title & Status", "description": "Decision title and current status (proposed, accepted, deprecated, superseded).", "required": true },
+        { "title": "Context", "description": "The situation, forces, and constraints that created the need for this decision.", "required": true },
+        { "title": "Decision", "description": "The decision that was made, stated clearly and concisely.", "required": true },
+        { "title": "Options Considered", "description": "All alternatives that were evaluated, with pros and cons for each.", "required": true },
+        { "title": "Consequences", "description": "Positive, negative, and neutral outcomes expected from this decision.", "required": true },
+        { "title": "Related Decisions", "description": "Links to related ADRs or decisions that interact with this one.", "required": false }
+      ]
+    },
+    {
+      "name": "Workflow Documentation",
+      "doc_type": "workflow",
+      "description": "Description of a multi-step business or technical workflow, including actors, triggers, steps, decision points, and outcomes.",
+      "audience": "Team members involved in the workflow, managers, and process improvement leads",
+      "typical_length": "1000–2500 words",
+      "sections": [
+        { "title": "Workflow Overview", "description": "Summary of the workflow, its purpose, trigger conditions, and expected outcomes.", "required": true },
+        { "title": "Actors & Roles", "description": "Who participates in the workflow and their responsibilities at each stage.", "required": true },
+        { "title": "Trigger Conditions", "description": "What initiates the workflow. May include multiple entry points.", "required": true },
+        { "title": "Process Steps", "description": "Sequential steps with decision points, branches, and handoffs clearly marked.", "required": true },
+        { "title": "Tools & Systems", "description": "Which tools, platforms, or systems are used at each step.", "required": false },
+        { "title": "Exceptions & Edge Cases", "description": "What happens when the normal flow breaks. Escalation paths.", "required": true },
+        { "title": "Metrics & SLAs", "description": "Performance targets, time limits, and quality metrics for the workflow.", "required": false }
+      ]
+    },
+    {
+      "name": "Release Note",
+      "doc_type": "release_note",
+      "description": "Communication of what changed in a release — new features, improvements, fixes, and known issues.",
+      "audience": "End users, customers, internal stakeholders, and support teams",
+      "typical_length": "500–1500 words",
+      "sections": [
+        { "title": "Release Summary", "description": "Version number, date, and one-paragraph summary of the release.", "required": true },
+        { "title": "New Features", "description": "New capabilities added in this release, with brief descriptions.", "required": true },
+        { "title": "Improvements", "description": "Enhancements to existing features.", "required": false },
+        { "title": "Bug Fixes", "description": "Issues resolved, with ticket references where available.", "required": true },
+        { "title": "Breaking Changes", "description": "Changes that require action from users. Migration guidance included.", "required": false },
+        { "title": "Known Issues", "description": "Issues discovered but not yet resolved. Workarounds if available.", "required": false },
+        { "title": "Upgrade Instructions", "description": "Steps to upgrade from the previous version.", "required": false }
+      ]
+    },
+    {
+      "name": "User Guide",
+      "doc_type": "user_guide",
+      "description": "Comprehensive guide for end users on how to use a product, feature, or system. Focuses on tasks and outcomes rather than technical internals.",
+      "audience": "End users — varying technical levels depending on the product",
+      "typical_length": "2000–6000 words",
+      "sections": [
+        { "title": "Introduction", "description": "What this guide covers, who it's for, and what the reader will be able to do after reading.", "required": true },
+        { "title": "Getting Started", "description": "First-time setup, account creation, installation, or onboarding steps.", "required": true },
+        { "title": "Core Features", "description": "Detailed walkthrough of primary features with step-by-step instructions.", "required": true },
+        { "title": "Advanced Usage", "description": "Power-user features, customization, integrations, and advanced configurations.", "required": false },
+        { "title": "FAQ", "description": "Common questions and answers based on support history and user feedback.", "required": false },
+        { "title": "Troubleshooting", "description": "Common problems and their solutions.", "required": true },
+        { "title": "Glossary", "description": "Definitions of key terms used in the guide.", "required": false }
+      ]
+    },
+    {
+      "name": "API Documentation",
+      "doc_type": "api_doc",
+      "description": "Reference documentation for an API, covering endpoints, authentication, request/response formats, errors, and usage examples.",
+      "audience": "Developers integrating with the API",
+      "typical_length": "1500–4000 words",
+      "sections": [
+        { "title": "Overview", "description": "What the API does, base URL, versioning scheme, and authentication method.", "required": true },
+        { "title": "Authentication", "description": "How to authenticate. Token types, scopes, and example auth flows.", "required": true },
+        { "title": "Endpoints", "description": "Each endpoint with method, path, parameters, request body, response schema, and status codes.", "required": true },
+        { "title": "Error Handling", "description": "Error response format, common error codes, and troubleshooting guidance.", "required": true },
+        { "title": "Rate Limits", "description": "Request limits, throttling behavior, and how to handle 429 responses.", "required": false },
+        { "title": "Webhooks", "description": "Event types, payload formats, delivery guarantees, and retry logic.", "required": false },
+        { "title": "Code Examples", "description": "Working examples in common languages (Python, JavaScript, cURL).", "required": true },
+        { "title": "Changelog", "description": "API version history and breaking changes.", "required": false }
+      ]
+    },
+    {
+      "name": "Meeting Summary",
+      "doc_type": "meeting_summary",
+      "description": "Structured record of a meeting including decisions made, action items, and key discussion points.",
+      "audience": "Meeting attendees and stakeholders who need visibility into decisions",
+      "typical_length": "300–1000 words",
+      "sections": [
+        { "title": "Meeting Details", "description": "Date, time, attendees, facilitator, and purpose of the meeting.", "required": true },
+        { "title": "Agenda", "description": "Topics that were planned for discussion.", "required": true },
+        { "title": "Key Discussion Points", "description": "Summary of significant discussions, arguments, and context.", "required": true },
+        { "title": "Decisions Made", "description": "Explicit list of decisions with rationale and who made them.", "required": true },
+        { "title": "Action Items", "description": "Tasks assigned with owner, deadline, and description.", "required": true },
+        { "title": "Open Items", "description": "Topics deferred or needing follow-up.", "required": false }
+      ]
+    },
+    {
+      "name": "QA / UAT Summary",
+      "doc_type": "qa_uat_summary",
+      "description": "Summary of quality assurance or user acceptance testing results, including test coverage, pass/fail rates, defects found, and release readiness assessment.",
+      "audience": "QA leads, product managers, and release decision-makers",
+      "typical_length": "800–2000 words",
+      "sections": [
+        { "title": "Test Summary", "description": "What was tested, test environment, duration, and overall pass/fail rate.", "required": true },
+        { "title": "Scope & Coverage", "description": "Features and areas covered by testing. Explicitly note any untested areas.", "required": true },
+        { "title": "Results Breakdown", "description": "Detailed results by feature area or test category. Include pass/fail/blocked counts.", "required": true },
+        { "title": "Defects Found", "description": "List of defects with severity, description, reproduction steps, and current status.", "required": true },
+        { "title": "Risk Assessment", "description": "Residual risks from untested areas, known defects, or environmental limitations.", "required": true },
+        { "title": "Release Recommendation", "description": "Go/no-go recommendation with supporting rationale.", "required": true },
+        { "title": "Appendix: Test Cases", "description": "Detailed test case list or link to test management system.", "required": false }
+      ]
+    },
+    {
+      "name": "Implementation Note",
+      "doc_type": "implementation_note",
+      "description": "Record of how something was implemented, capturing technical decisions, configurations, caveats, and post-implementation observations.",
+      "audience": "Engineering team, on-call engineers, and future maintainers",
+      "typical_length": "800–2500 words",
+      "sections": [
+        { "title": "Summary", "description": "What was implemented, when, and by whom. Link to the originating ticket or spec.", "required": true },
+        { "title": "Approach", "description": "Technical approach taken, including alternatives considered and why this approach was chosen.", "required": true },
+        { "title": "Configuration & Setup", "description": "Environment variables, feature flags, infrastructure changes, and deployment configurations.", "required": true },
+        { "title": "Caveats & Gotchas", "description": "Non-obvious behaviors, edge cases, workarounds, and technical debt introduced.", "required": true },
+        { "title": "Monitoring & Observability", "description": "Dashboards, alerts, log queries, and metrics to watch.", "required": false },
+        { "title": "Rollback Procedure", "description": "How to undo this implementation if problems arise.", "required": false },
+        { "title": "Follow-Up Items", "description": "Remaining work, tech debt tickets, and future improvements.", "required": false }
+      ]
+    },
+    {
+      "name": "Support Handover",
+      "doc_type": "support_handover",
+      "description": "Handover document for transferring support responsibility for a system, client, or domain to a new team or individual.",
+      "audience": "Incoming support team or individual taking over responsibilities",
+      "typical_length": "1000–3000 words",
+      "sections": [
+        { "title": "Handover Summary", "description": "What is being handed over, effective date, and parties involved.", "required": true },
+        { "title": "System / Client Overview", "description": "High-level description of the system or client, their importance, and key contacts.", "required": true },
+        { "title": "Current State", "description": "Active issues, ongoing projects, pending decisions, and known risks.", "required": true },
+        { "title": "Access & Credentials", "description": "Required access to systems, tools, and communication channels. How to obtain credentials.", "required": true },
+        { "title": "Common Issues & Runbooks", "description": "Frequently encountered problems and their resolution procedures.", "required": true },
+        { "title": "Escalation Paths", "description": "Who to contact for different types of issues. SLA expectations.", "required": true },
+        { "title": "Key Documentation", "description": "Links to existing documentation, wikis, runbooks, and architecture diagrams.", "required": true },
+        { "title": "Transition Timeline", "description": "Shadow period, knowledge transfer sessions, and full handover date.", "required": false }
+      ]
+    }
+  ]
+}
