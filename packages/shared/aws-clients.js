@@ -2,6 +2,13 @@ const { config } = require('./config');
 
 // Real AWS SDK only when explicit credentials are set (access key + secret).
 // AWS_ACCOUNT_ID alone is not sufficient to authenticate.
+function explicitCredentials() {
+  const id = (process.env.AWS_ACCESS_KEY_ID || '').trim();
+  const secret = (process.env.AWS_SECRET_ACCESS_KEY || '').trim();
+  if (!id || !secret) return undefined;
+  return { accessKeyId: id, secretAccessKey: secret };
+}
+
 const hasAwsCreds = !!(
   process.env.AWS_ACCESS_KEY_ID &&
   process.env.AWS_SECRET_ACCESS_KEY
@@ -28,10 +35,15 @@ if (isLocalDev) {
   const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
   const { SQSClient, SendMessageCommand, ReceiveMessageCommand, DeleteMessageCommand } = require('@aws-sdk/client-sqs');
 
-  const ddbClient = new DynamoDBClient({ region: config.aws.region });
+  const region = String(config.aws.region || 'us-east-1').trim();
+  const base = { region };
+  const creds = explicitCredentials();
+  if (creds) base.credentials = creds;
+
+  const ddbClient = new DynamoDBClient(base);
   const docClient = DynamoDBDocumentClient.from(ddbClient);
-  const s3 = new S3Client({ region: config.aws.region });
-  const sqs = new SQSClient({ region: config.aws.region });
+  const s3 = new S3Client(base);
+  const sqs = new SQSClient(base);
 
   dynamoClient = {
     async put(tableName, item) {
