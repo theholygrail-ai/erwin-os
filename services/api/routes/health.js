@@ -22,8 +22,12 @@ router.get('/', async (req, res) => {
   try {
     await dynamoClient.scan(config.aws.tables.jobs, null, null);
     checks.dynamodb = 'healthy';
-  } catch {
+  } catch (err) {
     checks.dynamodb = 'unhealthy';
+    if (req.query.debug === '1') {
+      checks.dynamodb_error = String(err?.message || err).slice(0, 300);
+      checks.dynamodb_table = config.aws.tables.jobs;
+    }
   }
 
   const allHealthy = checks.api === 'healthy' && checks.dynamodb === 'healthy';

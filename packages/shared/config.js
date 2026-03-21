@@ -1,8 +1,10 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 
-// Vercel / shell may inject trailing newlines; AWS SDK is sensitive to them.
-['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_REGION', 'AWS_SESSION_TOKEN'].forEach((k) => {
-  if (process.env[k]) process.env[k] = String(process.env[k]).trim();
+// Vercel / shell may inject trailing newlines; AWS SDK and table names are sensitive to them.
+Object.keys(process.env).forEach((k) => {
+  if (/^(AWS_|DYNAMODB_|SQS_|S3_|ERWIN_)/i.test(k) && process.env[k]) {
+    process.env[k] = String(process.env[k]).trim();
+  }
 });
 
 const config = {
