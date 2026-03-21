@@ -55,6 +55,15 @@ aws dynamodb create-table \
   --billing-mode PAY_PER_REQUEST \
   --region "$REGION" 2>/dev/null && echo "Created ${STACK}-connectors table" || echo "${STACK}-connectors table already exists"
 
+aws dynamodb create-table \
+  --table-name "${STACK}-audit" \
+  --attribute-definitions \
+    AttributeDefinition=AttributeName=audit_id,AttributeType=S \
+  --key-schema \
+    AttributeElement=AttributeName=audit_id,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region "$REGION" 2>/dev/null && echo "Created ${STACK}-audit table" || echo "${STACK}-audit table already exists"
+
 echo ""
 echo "--- S3 Bucket ---"
 

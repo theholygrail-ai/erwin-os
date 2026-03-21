@@ -1,5 +1,10 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 
+// Vercel / shell may inject trailing newlines; AWS SDK is sensitive to them.
+['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_REGION', 'AWS_SESSION_TOKEN'].forEach((k) => {
+  if (process.env[k]) process.env[k] = String(process.env[k]).trim();
+});
+
 const config = {
   groq: {
     apiKey: process.env.GROQ_API_KEY,
@@ -17,6 +22,7 @@ const config = {
       runs: process.env.DYNAMODB_RUNS_TABLE || 'erwin-os-runs',
       artifacts: process.env.DYNAMODB_ARTIFACTS_TABLE || 'erwin-os-artifacts',
       connectors: process.env.DYNAMODB_CONNECTORS_TABLE || 'erwin-os-connectors',
+      audit: process.env.DYNAMODB_AUDIT_TABLE || 'erwin-os-audit',
     },
   },
   clickup: {

@@ -84,4 +84,9 @@ git push -u origin main
 
 ### AWS (CLI)
 
-Long-running workers, orchestrator, and EventBridge jobs live outside Vercel. Use `infra/aws/setup.sh` and your AWS account; point Vercel env vars at the created DynamoDB tables and SQS queue URLs.
+This repo is deployed against the **astro-invest** AWS account when using the default CLI profile. Provision resources and IAM for the Vercel API:
+
+1. `export AWS_REGION=us-east-1` then `bash infra/aws/setup.sh` (see [`infra/aws/README.md`](infra/aws/README.md)).
+2. Attach [`infra/aws/iam-vercel-api-policy.json`](infra/aws/iam-vercel-api-policy.json) to IAM user `erwin-os-vercel-api`, create access keys, and set Vercel env vars (or `infra/aws/push-vercel-env.ps1` with a local `vercel-aws.env` — gitignored).
+
+Long-running workers, orchestrator, and EventBridge targets still run outside Vercel; the **production API** on Vercel uses real DynamoDB / S3 / SQS when `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` are set.

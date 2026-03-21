@@ -1,0 +1,58 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DynamoDBTables",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:PutItem",
+        "dynamodb:GetItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:us-east-1:974560757141:table/erwin-os-jobs",
+        "arn:aws:dynamodb:us-east-1:974560757141:table/erwin-os-jobs/index/*",
+        "arn:aws:dynamodb:us-east-1:974560757141:table/erwin-os-runs",
+        "arn:aws:dynamodb:us-east-1:974560757141:table/erwin-os-runs/index/*",
+        "arn:aws:dynamodb:us-east-1:974560757141:table/erwin-os-artifacts",
+        "arn:aws:dynamodb:us-east-1:974560757141:table/erwin-os-artifacts/index/*",
+        "arn:aws:dynamodb:us-east-1:974560757141:table/erwin-os-connectors",
+        "arn:aws:dynamodb:us-east-1:974560757141:table/erwin-os-audit"
+      ]
+    },
+    {
+      "Sid": "S3Artifacts",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::erwin-os-artifacts",
+        "arn:aws:s3:::erwin-os-artifacts/*"
+      ]
+    },
+    {
+      "Sid": "SQSJobQueue",
+      "Effect": "Allow",
+      "Action": [
+        "sqs:SendMessage",
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl"
+      ],
+      "Resource": [
+        "arn:aws:sqs:us-east-1:974560757141:erwin-os-jobs",
+        "arn:aws:sqs:us-east-1:974560757141:erwin-os-jobs-dlq"
+      ]
+    }
+  ]
+}

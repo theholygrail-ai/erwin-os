@@ -1,6 +1,11 @@
 const { config } = require('./config');
 
-const hasAwsCreds = !!(process.env.AWS_ACCESS_KEY_ID || config.aws.accountId);
+// Real AWS SDK only when explicit credentials are set (access key + secret).
+// AWS_ACCOUNT_ID alone is not sufficient to authenticate.
+const hasAwsCreds = !!(
+  process.env.AWS_ACCESS_KEY_ID &&
+  process.env.AWS_SECRET_ACCESS_KEY
+);
 const isLocalDev = !hasAwsCreds;
 
 let dynamoClient, s3Client, sqsClient;
